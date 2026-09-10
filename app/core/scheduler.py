@@ -49,13 +49,10 @@ class TaskScheduler:
             return
 
         hour_start = schedule["hour_start"]
+        minute_start = schedule.get("minute_start", 0)
         hour_end = schedule["hour_end"]
-        interval = schedule["interval_hours"]
-
-        if hour_start <= hour_end:
-            run_hours = [h for h in range(hour_start, hour_end + 1) if self._should_run_in_window(h, hour_start, hour_end, interval)]
-        else:
-            run_hours = [h for h in range(hour_start, 24)] + [h for h in range(0, hour_end + 1) if self._should_run_in_window(h, hour_start, hour_end, interval)]
+        minute_end = schedule.get("minute_end", 59)
+        interval_minutes = schedule.get("interval_minutes", 120)
 
         job_id = f"upload_file_{file_id}"
         existing = self.scheduler.get_job(job_id)
@@ -64,29 +61,26 @@ class TaskScheduler:
 
         self.scheduler.add_job(
             self._execute_upload,
-            trigger=IntervalTrigger(hours=interval),
+            trigger=IntervalTrigger(minutes=interval_minutes),
             id=job_id,
             args=[file_id],
             replace_existing=True,
-            next_run_time=self._calculate_next_run(days_enabled, interval),
+            next_run_time=self._calculate_next_run(days_enabled, hour_start, minute_start),
         )
-        logger.info(f"Tarea programada: archivo_id={file_id}, intervalo={interval}h, dias={days_enabled}")
+        logger.info(f"Tarea programada: archivo_id={file_id}, intervalo={interval_minutes}min, dias={days_enabled}")
 
-    def _should_run_in_window(self, hour, start, end, interval):
-        if start <= end:
-            return (hour - start) % max(int(interval), 1) == 0
-        return True
-
-    def _calculate_next_run(self, days_enabled, interval_hours):
+    def _calculate_next_run(self, days_enabled, hour_start, minute_start):
+        from datetime import timedelta
         now = datetime.now()
         for day_offset in range(8):
-            check_date = now
-            from datetime import timedelta
             check_date = now + timedelta(days=day_offset)
             if check_date.weekday() in days_enabled:
                 if day_offset == 0:
-                    return check_date.replace(hour=check_date.hour, minute=0, second=0, microsecond=0)
-                return check_date.replace(hour=0, minute=0, second=0, microsecond=0)
+                    target = check_date.replace(hour=hour_start, minute=minute_start, second=0, microsecond=0)
+                    if target > now:
+                        return target
+                    continue
+                return check_date.replace(hour=hour_start, minute=minute_start, second=0, microsecond=0)
         return now
 
     def _execute_upload(self, file_id):

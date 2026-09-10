@@ -32,15 +32,17 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             file_id INTEGER NOT NULL UNIQUE,
             hour_start INTEGER DEFAULT 0,
+            minute_start INTEGER DEFAULT 0,
             hour_end INTEGER DEFAULT 23,
-            interval_hours REAL DEFAULT 2.0,
+            minute_end INTEGER DEFAULT 59,
+            interval_minutes INTEGER DEFAULT 120,
             mon INTEGER DEFAULT 1,
             tue INTEGER DEFAULT 1,
             wed INTEGER DEFAULT 1,
             thu INTEGER DEFAULT 1,
             fri INTEGER DEFAULT 1,
-            sat INTEGER DEFAULT 1,
-            sun INTEGER DEFAULT 1,
+            sat INTEGER DEFAULT 0,
+            sun INTEGER DEFAULT 0,
             FOREIGN KEY (file_id) REFERENCES files(id) ON DELETE CASCADE
         )
     """)
@@ -122,15 +124,16 @@ def get_active_files():
     return [dict(r) for r in rows]
 
 
-def update_schedule(file_id, hour_start, hour_end, interval_hours,
-                    mon, tue, wed, thu, fri, sat, sun):
+def update_schedule(file_id, hour_start, minute_start, hour_end, minute_end,
+                    interval_minutes, mon, tue, wed, thu, fri, sat, sun):
     conn = get_connection()
     conn.execute("""
         UPDATE schedules
-        SET hour_start=?, hour_end=?, interval_hours=?,
+        SET hour_start=?, minute_start=?, hour_end=?, minute_end=?,
+            interval_minutes=?,
             mon=?, tue=?, wed=?, thu=?, fri=?, sat=?, sun=?
         WHERE file_id=?
-    """, (hour_start, hour_end, interval_hours,
+    """, (hour_start, minute_start, hour_end, minute_end, interval_minutes,
           int(mon), int(tue), int(wed), int(thu), int(fri), int(sat), int(sun),
           file_id))
     conn.commit()
