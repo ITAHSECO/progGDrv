@@ -77,6 +77,11 @@ def _migrate_schema(cursor):
         cursor.execute("UPDATE schedules SET interval_minutes = CAST(interval_hours * 60 AS INTEGER) WHERE interval_minutes = 120")
         cursor.execute("ALTER TABLE schedules DROP COLUMN interval_hours")
 
+    cursor.execute("PRAGMA table_info(files)")
+    file_columns = {row[1] for row in cursor.fetchall()}
+    if "last_drive_file_id" not in file_columns:
+        cursor.execute("ALTER TABLE files ADD COLUMN last_drive_file_id TEXT DEFAULT ''")
+
 
 def add_file(name, source_path, drive_folder_id=""):
     conn = get_connection()
@@ -114,6 +119,13 @@ def delete_file(file_id):
 def set_file_active(file_id, active):
     conn = get_connection()
     conn.execute("UPDATE files SET active=? WHERE id=?", (int(active), file_id))
+    conn.commit()
+    conn.close()
+
+
+def set_last_drive_file_id(file_id, drive_file_id):
+    conn = get_connection()
+    conn.execute("UPDATE files SET last_drive_file_id=? WHERE id=?", (drive_file_id, file_id))
     conn.commit()
     conn.close()
 

@@ -30,14 +30,17 @@ def _execute_upload(file_id):
             return
 
     try:
+        existing_id = file_data.get("last_drive_file_id") or None
         result = _gdrive_client.upload_file(
             file_path=file_data["source_path"],
             folder_id=file_data["drive_folder_id"] or None,
+            existing_file_id=existing_id,
         )
+        db.set_last_drive_file_id(file_id, result.get("id"))
         db.add_history(
             file_id=file_id,
             status="success",
-            message=f"Subido: {result.get('name')} (ID: {result.get('id')})",
+            message=f"{'Actualizado' if existing_id else 'Subido'}: {result.get('name')} (ID: {result.get('id')})",
             file_size=result.get("size", 0),
         )
         logger.info(f"Upload exitoso: {file_data['name']}")

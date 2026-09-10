@@ -44,7 +44,7 @@ class GDriveClient:
     def is_authenticated(self):
         return self._authenticated
 
-    def upload_file(self, file_path, folder_id=None, name_prefix=""):
+    def upload_file(self, file_path, folder_id=None, existing_file_id=None):
         if not self._authenticated:
             raise RuntimeError("No autenticado con Google Drive.")
 
@@ -52,18 +52,24 @@ class GDriveClient:
             raise FileNotFoundError(f"Archivo no encontrado: {file_path}")
 
         file_name = os.path.basename(file_path)
-        file_metadata = {"name": file_name}
-        if folder_id:
-            file_metadata["parents"] = [folder_id]
-
         media = MediaFileUpload(file_path, resumable=True)
-        file_size = os.path.getsize(file_path)
 
-        result = self.service.files().create(
-            body=file_metadata, media_body=media, fields="id,name,size"
-        ).execute()
+        if existing_file_id:
+            result = self.service.files().update(
+                fileId=existing_file_id,
+                media_body=media,
+                fields="id,name,size",
+            ).execute()
+            logger.info(f"Archivo actualizado: {file_name} (ID: {result.get('id')})")
+        else:
+            file_metadata = {"name": file_name}
+            if folder_id:
+                file_metadata["parents"] = [folder_id]
+            result = self.service.files().create(
+                body=file_metadata, media_body=media, fields="id,name,size"
+            ).execute()
+            logger.info(f"Archivo subido: {result.get('name')} (ID: {result.get('id')})")
 
-        logger.info(f"Archivo subido: {result.get('name')} (ID: {result.get('id')})")
         return result
 
     def list_folders(self, page_size=100):
