@@ -10,7 +10,7 @@ class FolderPickerDialog:
         self.gdrive = gdrive_client
         self.top = tk.Toplevel(parent)
         self.top.title("Seleccionar Carpeta de Drive")
-        self.top.geometry("450x400")
+        self.top.geometry("500x420")
         self.top.resizable(False, False)
         self.top.transient(parent)
         self.top.grab_set()
@@ -21,14 +21,18 @@ class FolderPickerDialog:
             padx=10, pady=(10, 5), anchor=tk.W
         )
 
+        ttk.Button(self.top, text="Cargar carpetas", command=self._load_folders).pack(
+            fill=tk.X, padx=10, pady=(0, 5)
+        )
+
         frame = ttk.Frame(self.top)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
 
         self.tree = ttk.Treeview(frame, columns=("id", "name"), show="headings", selectmode="browse")
         self.tree.heading("id", text="ID")
         self.tree.heading("name", text="Nombre")
-        self.tree.column("id", width=180)
-        self.tree.column("name", width=230)
+        self.tree.column("id", width=200)
+        self.tree.column("name", width=280)
 
         scroll = ttk.Scrollbar(frame, orient=tk.VERTICAL, command=self.tree.yview)
         self.tree.configure(yscrollcommand=scroll.set)
@@ -38,15 +42,12 @@ class FolderPickerDialog:
 
         ttk.Label(self.top, text="O ingresa el ID manualmente:").pack(padx=10, anchor=tk.W)
         self.var_manual = tk.StringVar()
-        ttk.Entry(self.top, textvariable=self.var_manual, width=55).pack(padx=10, pady=3)
+        ttk.Entry(self.top, textvariable=self.var_manual, width=60).pack(padx=10, pady=3, fill=tk.X)
 
         btn_frame = ttk.Frame(self.top)
         btn_frame.pack(fill=tk.X, padx=10, pady=10)
-        ttk.Button(btn_frame, text="Cargar carpetas", command=self._load_folders).pack(side=tk.LEFT, padx=2)
         ttk.Button(btn_frame, text="Aceptar", command=self._on_ok).pack(side=tk.RIGHT, padx=2)
         ttk.Button(btn_frame, text="Cancelar", command=self.top.destroy).pack(side=tk.RIGHT, padx=2)
-
-        self._load_folders()
 
     def _load_folders(self):
         for item in self.tree.get_children():

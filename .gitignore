@@ -8,3 +8,4 @@ token.json
 .env
 venv/
 .venv/
+scheduler_jobs.db
