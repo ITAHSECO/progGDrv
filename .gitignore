@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.pyo
+*.db
+*.log
+credentials.json
+token.json
+.env
+venv/
+.venv/
