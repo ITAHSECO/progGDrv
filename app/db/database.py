@@ -59,8 +59,23 @@ def init_db():
         )
     """)
 
+    _migrate_schema(cursor)
     conn.commit()
     conn.close()
+
+
+def _migrate_schema(cursor):
+    cursor.execute("PRAGMA table_info(schedules)")
+    columns = {row[1] for row in cursor.fetchall()}
+
+    if "minute_start" not in columns:
+        cursor.execute("ALTER TABLE schedules ADD COLUMN minute_start INTEGER DEFAULT 0")
+    if "minute_end" not in columns:
+        cursor.execute("ALTER TABLE schedules ADD COLUMN minute_end INTEGER DEFAULT 59")
+    if "interval_minutes" not in columns:
+        cursor.execute("ALTER TABLE schedules ADD COLUMN interval_minutes INTEGER DEFAULT 120")
+        cursor.execute("UPDATE schedules SET interval_minutes = CAST(interval_hours * 60 AS INTEGER) WHERE interval_minutes = 120")
+        cursor.execute("ALTER TABLE schedules DROP COLUMN interval_hours")
 
 
 def add_file(name, source_path, drive_folder_id=""):
