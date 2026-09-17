@@ -1,0 +1,1 @@
+pyinstaller --onefile --windowed --icon=respaldos.ico main.py

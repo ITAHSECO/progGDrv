@@ -9,3 +9,5 @@ token.json
 venv/
 .venv/
 scheduler_jobs.db
+build
+dist
